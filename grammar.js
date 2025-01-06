@@ -37,10 +37,13 @@ module.exports = grammar({
       $.variable_access,
       $.contextual_variable_access,
       $.function_component_call,
+      $.function_return_value,
       $.operand,
+      $.comment,
     ),
 
     block: $ => seq('{', repeat($._expression), '}'),
+    comment: () => token(seq('//', /.*/)),
 
     // <import>
     "import": $ => seq(
@@ -121,6 +124,7 @@ module.exports = grammar({
     function_arguments: $ => seq('(', commaSep($.function_argument), ')'),
     function_argument: $ => seq($.ident, optional($.elp_type)),
     function_return_type: $ => prec.right(2, seq('->', commaSep($.elp_type))),
+    function_return_value: $ => seq("return", $._expression),
 
     function_call: $ => seq(choice($.variable_access, $.contextual_variable_access), optional($.elp_type_generic), '(', commaSep($._expression), ')'),
 
@@ -141,8 +145,8 @@ module.exports = grammar({
     // <lexer tokens>
     ident: () => /[a-zA-Z_]+/,
     number: () => /\d+/,
-    "var": () => 'var',
-    "const": () => 'const',
+    var: () => 'var',
+    const: () => 'const',
     string: () => /"([^"]*)"/,
     bitwise_operand: () => choice('~', '<<', '>>', '|'),
     operand: () => choice('+=', '-=', '*=', '/=', '%=', '^=', '&=', '~=', '=', '!=', '=='),

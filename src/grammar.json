@@ -106,7 +106,15 @@
         },
         {
           "type": "SYMBOL",
+          "name": "function_return_value"
+        },
+        {
+          "type": "SYMBOL",
           "name": "operand"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "comment"
         }
       ]
     },
@@ -129,6 +137,22 @@
           "value": "}"
         }
       ]
+    },
+    "comment": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "//"
+          },
+          {
+            "type": "PATTERN",
+            "value": ".*"
+          }
+        ]
+      }
     },
     "import": {
       "type": "SEQ",
@@ -1334,6 +1358,19 @@
           }
         ]
       }
+    },
+    "function_return_value": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "return"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_expression"
+        }
+      ]
     },
     "function_call": {
       "type": "SEQ",
