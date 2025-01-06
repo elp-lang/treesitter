@@ -22,6 +22,7 @@ module.exports = grammar({
       $.export,
       $.enum,
       $.if_tree,
+      $.object_def,
     ),
 
     block: $ => seq('{', repeat($._expression),  '}'),
@@ -30,7 +31,7 @@ module.exports = grammar({
     "import": $ => seq(
       'import',
       '{',
-      repeat($._import_name),
+      commaSep($._import_name),
       '}',
       'from',
       $.string,
@@ -71,11 +72,21 @@ module.exports = grammar({
     macro: $ => seq('@', $.ident, '(', commaSep($.elp_type), ')'),
     // </macro>
 
+    // <object_def>
+    object_def: $ => seq('object', $.ident, optional($.object_implements), '{', commaSep($.object_member), '}'),
+    object_implements: $ => seq('implements', commaSep($.elp_type)),
+    object_member: $ => seq(optional(choice('public', 'private')), '.', $.ident, $.elp_type, optional($.object_key_default_value), optional($.object_key_tags)),
+    object_key_default_value: $ => seq('=', $._expression),
+    object_key_tags: $ => seq('`', commaSep($.ident, $.string), '`'),
+    // </object_def>
+
+    // <lexer tokens>
     ident: $ => /[a-zA-Z_]+/,
     number: $ => /\d+/,
     "var": $ => 'var',
     "const": $ => 'const',
     string: $ => /"([^"]*)"/,
+    // </lexer tokens>
   }
 });
 
