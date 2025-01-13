@@ -16,9 +16,11 @@ module.exports = grammar({
     _expression: $ => choice(
       $.import,
       $.number,
+      $.object_instantiation,
       $.block,
       $.string,
-      $.macro,
+      $.macro_attribute,
+      $.macro_fn_call,
       $.export,
       $.enum,
       $.if_tree,
@@ -28,7 +30,6 @@ module.exports = grammar({
       $.external_block,
       $.function_def,
       $.function_call,
-      $.object_instantiation,
       $.match_tree,
       $.bitwise_operation,
       $.variable_assignment,
@@ -40,30 +41,33 @@ module.exports = grammar({
       $.function_return_value,
       $.operand,
       $.comment,
+      $.for_loop,
+      $.object_value_spread,
     ),
 
     block: $ => seq('{', repeat($._expression), '}'),
     comment: () => token(seq('//', /.*/)),
 
     // <import>
-    "import": $ => seq(
+    import: $ => seq(
       'import',
       '{',
-      commaSep($._import_name),
+      sepBy(",", $.import_name),
+      optional(","),
       '}',
       'from',
       $.string,
     ),
 
-    _import_name: $ => seq(
+    import_name: $ => seq(
       $.ident,
-      optional($._import_name_alias),
+      optional($.import_name_alias),
     ),
 
-    _import_name_alias: $ => seq('as', $.ident),
+    import_name_alias: $ => seq('as', $.ident),
     // </import>
 
-    "export": $ => seq(
+    export: $ => seq(
       'export',
       $._expression
     ),
@@ -73,16 +77,19 @@ module.exports = grammar({
     // </unary binary>
 
     // <elp type>
-    elp_type: $ => seq($.ident, $.elp_type_generic),
-    elp_type_generic: $ => seq('<', commaSep($.elp_type_generic_param), '>'),
+    elp_type: $ => choice(seq('[', $.elp_type, ']'), seq(optional($.pointer_semantics), $.ident, optional($.elp_type_generic))),
+    elp_type_generic: $ => seq('<', sepBy(",", $.elp_type_generic_param), '>'),
     elp_type_generic_param: $ => seq($.elp_type, optional($.elp_type_generic_constraint)),
-    elp_type_generic_constraint: $ => seq(':', $.elp_type, optional(seq('+', $.elp_type))),
+    elp_type_generic_constraint: $ => seq(':', $.elp_type, optional(sepBy('+', $.elp_type))),
     // </elp type>
 
     // <enum>
-    enum: $ => seq('enum', $.ident, '{', commaSep($.enum_member), '}'),
-    enum_member: $ => seq('.', $.ident, optional(seq('(', commaSep($.elp_type), ')'))),
+    enum: $ => seq('enum', $.ident, '{', sepBy(",", $.enum_member), optional(","), '}'),
+    enum_member: $ => seq('.', $.ident, optional(seq('(', sepBy(",", $.elp_type), ')'))),
     // </enum>
+
+    // Loops and arrays.
+    for_loop: $ => seq('for', $._expression, 'in', $._expression, $.block),
 
     // <externals>
     external_block: $ => seq('external', '{', repeat(choice($.fn_header_def, $.object_def)), '}'),
@@ -96,37 +103,44 @@ module.exports = grammar({
     // </if trees>
 
     // <macro>
-    macro: $ => seq('@', $.ident, '(', commaSep($.elp_type), ')'),
+    macro_fn_call: $ => seq('@', $.ident, '(', sepBy(",", $.elp_type), ')'),
+    macro_attribute: $ => seq('@', $.ident),
+    precomp: $ => seq('#', $.ident, '(', sepBy(",", $.elp_type), ')'),
     // </macro>
 
     // <variables>
-    variable_access: $ => prec.left(2, seq(optional(choice('*', '&')), seq($.ident, optional(repeat(seq('.', $.ident)))))),
-    variable_declaration: $ => prec.left(2, seq(choice('var', 'const'), $.ident, optional($.elp_type))),
-    variable_assignment: $ => prec.right(2, seq(choice($.variable_declaration, $.variable_access))),
+    mutability_selector: _ => choice('var', 'const'),
+    visibility_selector: _ => choice('public', 'private'),
+    pointer_semantics: _ => choice('*', '&'),
+    variable_access: $ => prec.left(
+      seq(optional(choice('*', '&')), seq($.ident, optional(repeat(seq('.', $.ident)))))),
+    variable_declaration: $ => prec.left(seq($.mutability_selector, $.ident, optional($.elp_type))),
+    variable_assignment: $ => prec.left(1, seq(choice($.variable_declaration, $.variable_access))),
     contextual_variable_access: $ => seq(".", $.ident),
 
     value_assignment: $ => prec(2, seq($.operand, $._expression)),
     // </variables>
 
     // <objects>
-    object_def: $ => seq('object', $.ident, optional($.object_implements), '{', commaSep($.object_member), '}'),
-    object_implements: $ => seq('implements', commaSep($.elp_type)),
-    object_member: $ => seq(optional(choice('public', 'private')), '.', $.ident, $.elp_type, optional($.object_key_default_value), optional($.object_key_tags)),
+    object_def: $ => seq('object', $.ident, optional($.elp_type_generic), optional($.object_implements), '{', sepBy(",", $.object_member), optional(','), '}'),
+    object_implements: $ => seq('implements', sepBy(",", $.elp_type)),
+    object_member: $ => seq(optional($.visibility_selector), optional($.mutability_selector), '.', $.ident, $.elp_type, optional($.object_key_default_value), optional($.object_key_tags)),
     object_key_default_value: $ => seq('=', $._expression),
-    object_key_tags: $ => seq('`', commaSep(seq($.ident, $.string)), '`'),
+    object_key_tags: $ => seq('`', sepBy(",", seq($.ident, ":", $.string)), '`'),
+    object_value_spread: $ => seq('...', $._expression),
 
-    object_instantiation: $ => seq($.ident, '{', choice(seq('...', $._expression), seq('.', $.ident, '=', $._expression)), '}'),
+    object_instantiation: $ => prec(2, seq($.ident, '{', sepBy(",", choice($.object_value_spread, seq('.', $.ident, $.variable_assignment))), optional(","), '}')),
     // </objects>
 
     // <functions>
-    fn_header_def: $ => seq('fn', $.variable_access, optional($.elp_type_generic), $.function_arguments, $.function_return_type),
-    function_def: $ => seq('fn', $.variable_access, optional($.elp_type_generic), $.function_arguments, optional($.function_return_type), $.block),
-    function_arguments: $ => seq('(', commaSep($.function_argument), ')'),
-    function_argument: $ => seq($.ident, optional($.elp_type)),
-    function_return_type: $ => prec.right(2, seq('->', commaSep($.elp_type))),
+    fn_header_def: $ => seq(optional($.pointer_semantics), 'fn', $.variable_access, optional($.elp_type_generic), $.function_arguments, $.function_return_type),
+    function_def: $ => seq(optional($.pointer_semantics), 'fn', $.variable_access, optional($.elp_type_generic), $.function_arguments, optional($.function_return_type), $.block),
+    function_arguments: $ => seq('(', sepBy(",", $.function_argument), optional(","), ')'),
+    function_argument: $ => seq(optional($.pointer_semantics), $.ident, optional($.elp_type)),
+    function_return_type: $ => prec.right(2, seq('->', sepBy(",", $.elp_type))),
     function_return_value: $ => seq("return", $._expression),
 
-    function_call: $ => seq(choice($.variable_access, $.contextual_variable_access), optional($.elp_type_generic), '(', commaSep($._expression), ')'),
+    function_call: $ => seq(choice($.variable_access, $.contextual_variable_access), optional($.elp_type_generic), '(', sepBy(",", $._expression), ')'),
 
     function_component_call: $ => prec(2, seq($.function_call, $.block)),
     // </functions>
@@ -137,16 +151,12 @@ module.exports = grammar({
 
     // <match>
     match_tree: $ => seq('match', $._expression, '{', repeat($.match_arm), '}'),
-    _match_rangeables: $ => choice($.string, $.number, $.variable_access),
-    match_range: $ => seq(choice($._match_rangeables, seq('..', optional($._match_rangeables)), seq($._match_rangeables, '..', $._match_rangeables))),
-    match_arm: $ => prec(2, seq(choice($.function_call, $.contextual_variable_access, $.match_range), '->', choice($.block, $._expression), optional(','))),
+    match_arm: $ => prec(2, seq($._expression, '->', choice($.block, $._expression), optional(','))),
     // </match>
 
     // <lexer tokens>
-    ident: () => /[a-zA-Z_]+/,
+    ident: () => /[a-zA-Z0-9_]+/,
     number: () => /\d+/,
-    var: () => 'var',
-    const: () => 'const',
     string: () => /"([^"]*)"/,
     bitwise_operand: () => choice('~', '<<', '>>', '|'),
     operand: () => choice('+=', '-=', '*=', '/=', '%=', '^=', '&=', '~=', '=', '!=', '=='),
@@ -155,15 +165,17 @@ module.exports = grammar({
 });
 
 /**
+ * @param {string} sep
  * @param {RuleOrLiteral} rule
  */
-function commaSep1(rule) {
-  return seq(rule, repeat(seq(',', rule)))
+function sepBy1(sep, rule) {
+  return seq(rule, repeat(seq(sep, rule)))
 }
 
 /**
+ * @param {string} sep
  * @param {RuleOrLiteral} rule
  */
-function commaSep(rule) {
-  return optional(commaSep1(rule))
+function sepBy(sep, rule) {
+  return optional(sepBy1(sep, rule))
 }

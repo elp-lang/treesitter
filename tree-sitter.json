@@ -5,7 +5,11 @@
       "camelcase": "Elp",
       "scope": "source.elp",
       "path": ".",
-      "file-types": null,
+      "file-types": [
+        ".elp",
+        ".velp",
+        ".selp"
+      ],
       "injection-regex": "^elp$"
     }
   ],

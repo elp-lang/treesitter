@@ -1,107 +1,109 @@
 ;; Highlights for the Elp programming language
 
+;; Keywords
 [
-  ;; General constructs
-  (module) @none
+  "component" 
+  "const" 
+  "else" 
+  "elseif" 
+  "enum" 
+  "export" 
+  "external" 
+  "fn" 
+  "for" 
+  "if" 
+  "implements" 
+  "import" 
+  "match" 
+  "object" 
+  "var" 
+] @keyword
 
-  ;; Keywords
-  "import" @keyword
-  "export" @keyword
-  "enum" @keyword
-  "if" @keyword
-  "elseif" @keyword
-  "else" @keyword
-  "external" @keyword
-  "object" @keyword
-  "implements" @keyword
-  "match" @keyword
-  "var" @keyword
-  "const" @keyword
-  "fn" @keyword
-  "component" @keyword
-  "return" @keyword
+[
+  "in"
+  "is"
+  "as"
+  "return"
+  "not"
+  "public"
+  "private"
+ ] @module.builtin
 
-  ;; Match comments and assign them to `@comment`
-  (comment) @comment
+;; Match comments and assign them to `@comment`
+(comment) @comment
 
-  ;; Identifiers
-  (ident) @variable
+;; Identifiers
+(ident) @local.definition
 
-  ;; Strings
-  (string) @string
+;; Strings
+(string) @string
 
-  ;; Numbers
-  (number) @number
+;; Numbers
+(number) @number
 
-  ;; Types
-  (elp_type) @type
-  (elp_type_generic) @type
-  (elp_type_generic_param) @type
+;; Types
+(elp_type) @type
+(elp_type_generic) @attribute
+(elp_type_generic_param) @attribute.builtin
 
-  ;; Enum members
-  (enum_member) @constant
+;; Enum members
+(enum_member) @constant
 
-  ;; Operators
-  (bitwise_operand) @operator
-  (operand) @operator
+;; Operators
+(bitwise_operand) @operator
+(operand) @operator
 
-  ;; Blocks
-  (block) @block
+;; Blocks
+(block) @block
 
-  ;; Object definitions and members
-  (object_def) @type
-  (object_member) @property
-  (object_key_default_value) @property
-  (object_key_tags) @comment
+;; Object definitions and members
+(object_def 
+  (ident) @local.definition
+   @block)
 
-  ;; Functions
-  (function_def) @function
-  (fn_header_def) @function
-  (function_call) @function
-  (function_arguments) @parameter
-  (function_argument) @parameter
-  (function_return_type) @type
+;; Functions
+(function_def) @function
+(fn_header_def) @function
+(function_arguments) @parameter
+(function_argument) @local.definition
+(function_return_type) @type
 
-  ;; Components
-  (component_def) @type
+(function_call) @function.method
+(function_component_call) @function.method
 
-  ;; Match
-  (match_tree) @conditional
-  (match_range) @operator
-  (match_arm) @conditional
+;; Components
+(component_def) @function
 
-  ; Macros
+; Macros
 
-  ; Function Form Macro
-  (function_call
-    (variable_access
-      (ident) @function.macro
-      (#match? @function.macro "^[@][a-zA-Z_]+$")
-    )
+; Function Form Macro
+(function_call
+  (variable_access
+    (ident) @function.macro
+    (#match? @function.macro "^[@][a-zA-Z_]+$")
   )
+)
 
-  ; Attribute Form Macro
-  (macro
-    (ident) @function.macro)
+; Attribute Form Macro
+(macro_attribute) @function.macro
 
-  ;; Variables
-  (variable_declaration) @variable.builtin
-  (variable_assignment) @variable
-  (variable_access) @variable
-  (contextual_variable_access) @variable.builtin
+;; Variables
+(variable_declaration) @variable
+(variable_assignment) @variable
+(variable_access) @variable
+(contextual_variable_access) @variable.builtin
 
-  ;; Externals
-  (external_block) @attribute
-  (external_symbol) @attribute
+;; Externals
+(external_block) @attribute
+(external_symbol) @attribute
 
-  ;; Imports
-  (import) @include
-;;  (_import_name) @variable
-;;  (_import_name_alias) @variable
+;; Imports
+(import) @include
+  (import_name) @variable
+  (import_name_alias) @variable
 
-  ;; Conditionals
-  (if_tree) @conditional
-  (elseif_tree) @conditional
-  (else_block) @conditional
-]
+;; Conditionals
+(if_tree) @conditional
+(elseif_tree) @conditional
+(else_block) @conditional
 
