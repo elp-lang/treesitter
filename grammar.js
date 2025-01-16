@@ -43,6 +43,7 @@ module.exports = grammar({
       $.comment,
       $.for_loop,
       $.object_value_spread,
+      $.logic_conditionals
     ),
 
     block: $ => seq('{', repeat($._expression), '}'),
@@ -111,6 +112,7 @@ module.exports = grammar({
     // <variables>
     mutability_selector: _ => choice('var', 'const'),
     visibility_selector: _ => choice('public', 'private'),
+    logic_conditionals: _ => choice("or", "not", "is"),
     pointer_semantics: _ => choice('*', '&'),
     variable_access: $ => prec.left(
       seq(optional(choice('*', '&')), seq($.ident, optional(repeat(seq('.', $.ident)))))),
@@ -129,7 +131,7 @@ module.exports = grammar({
     object_key_tags: $ => seq('`', sepBy(",", seq($.ident, ":", $.string)), '`'),
     object_value_spread: $ => seq('...', $._expression),
 
-    object_instantiation: $ => prec(2, seq($.ident, '{', sepBy(",", choice($.object_value_spread, seq('.', $.ident, $.variable_assignment))), optional(","), '}')),
+    object_instantiation: $ => prec.left(3, seq($.ident, '{', sepBy(",", choice($.object_value_spread, seq('.', $.ident, $.variable_assignment))), optional(","), '}')),
     // </objects>
 
     // <functions>

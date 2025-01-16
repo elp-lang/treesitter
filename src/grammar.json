@@ -1,5 +1,4 @@
 {
-  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
   "name": "elp",
   "rules": {
     "module": {
@@ -127,6 +126,10 @@
         {
           "type": "SYMBOL",
           "name": "object_value_spread"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "logic_conditionals"
         }
       ]
     },
@@ -928,6 +931,23 @@
         }
       ]
     },
+    "logic_conditionals": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "or"
+        },
+        {
+          "type": "STRING",
+          "value": "not"
+        },
+        {
+          "type": "STRING",
+          "value": "is"
+        }
+      ]
+    },
     "pointer_semantics": {
       "type": "CHOICE",
       "members": [
@@ -1381,8 +1401,8 @@
       ]
     },
     "object_instantiation": {
-      "type": "PREC",
-      "value": 2,
+      "type": "PREC_LEFT",
+      "value": 3,
       "content": {
         "type": "SEQ",
         "members": [
@@ -2057,3 +2077,4 @@
   "inline": [],
   "supertypes": []
 }
+

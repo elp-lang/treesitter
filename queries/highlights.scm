@@ -13,20 +13,21 @@
   "for" 
   "if" 
   "implements" 
-  "import" 
   "match" 
   "object" 
   "var" 
+  "return"
 ] @keyword
 
 [
   "in"
   "is"
   "as"
-  "return"
   "not"
   "public"
   "private"
+  "import"
+  "from"
  ] @module.builtin
 
 ;; Match comments and assign them to `@comment`
