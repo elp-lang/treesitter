@@ -17,6 +17,8 @@ INCLUDEDIR ?= $(PREFIX)/include
 LIBDIR ?= $(PREFIX)/lib
 PCLIBDIR ?= $(LIBDIR)/pkgconfig
 
+RTP := /usr/share/nvim/runtime
+
 # source/object files
 PARSER := $(SRC_DIR)/parser.c
 EXTRAS := $(filter-out $(PARSER),$(wildcard $(SRC_DIR)/*.c))
@@ -90,5 +92,10 @@ clean:
 
 test:
 	$(TS) test
+
+install_queries: all
+	mkdir $(RTP)/queries/elp || true
+	cp ./queries/* $(RTP)/queries/elp/
+
 
 .PHONY: all install uninstall clean test
